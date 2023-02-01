@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 285e9c62856eb544ebc115dc92de73a0, type: 3}
+  m_Name: TileDataDic
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects:
+    - {fileID: 11400000, guid: 2ab9e8f400445d24ab6ec26285447924, type: 2}
+    - {fileID: 11400000, guid: 285b88a14af3fec4681417532749f7aa, type: 2}
+    - {fileID: 11400000, guid: 458068942ba5fa94491247560086aeff, type: 2}
+    - {fileID: 11400000, guid: 73dd9282d3750ee40a92624c1b7c50aa, type: 2}
+    - {fileID: 11400000, guid: bd43716272d6fb94a915c33fe0a9c746, type: 2}
+    - {fileID: 11400000, guid: d8b56244dc9106d40a4de6112419b469, type: 2}
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes:
+    - Name: DataDic
+      Entry: 7
+      Data: 0|System.Collections.Generic.Dictionary`2[[UnityEngine.Tilemaps.TileBase,
+        UnityEngine.TilemapModule],[TileData, Assembly-CSharp]], mscorlib
+    - Name: comparer
+      Entry: 7
+      Data: 1|System.Collections.Generic.ObjectEqualityComparer`1[[UnityEngine.Tilemaps.TileBase,
+        UnityEngine.TilemapModule]], mscorlib
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 12
+      Data: 3
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 10
+      Data: 0
+    - Name: $v
+      Entry: 10
+      Data: 1
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 10
+      Data: 2
+    - Name: $v
+      Entry: 10
+      Data: 3
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 10
+      Data: 4
+    - Name: $v
+      Entry: 10
+      Data: 5
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
