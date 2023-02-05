@@ -13,6 +13,6 @@ public class FlowerController : MonoBehaviourSingleton<FlowerController>
 
     private void Update()
     {
-        _animator.SetInteger("Score", GameManager.Instance.Score);
+        _animator.SetInteger("Level", GameManager.Instance.GetLevel());
     }
 }

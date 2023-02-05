@@ -5,6 +5,7 @@ using UnityEngine.Tilemaps;
 using UnityEngine.Events;
 using Sirenix.OdinInspector;
 
+
 public class BuildManager : MonoBehaviourSingleton<BuildManager>
 {
    
@@ -14,14 +15,17 @@ public class BuildManager : MonoBehaviourSingleton<BuildManager>
 
     public struct RootBuilderTile
     {
-        public RootBuilderTile(TileBase rbtile, List<TileData> neibours)
+        public RootBuilderTile(TileBase rbtile, List<TileData> neibours, int[] pointFlag)
         {
             RBTile = rbtile;
             Neibours = neibours;
+            PointFlag = pointFlag;
         }
    
         public TileBase RBTile { get; private set; }
         public List<TileData> Neibours { get; private set; }
+
+        public int[] PointFlag;
 
     }
 
@@ -29,7 +33,16 @@ public class BuildManager : MonoBehaviourSingleton<BuildManager>
     Tilemap _tilemap;
 
     [SerializeField]
+    Tilemap _rootTileMap;
+
+    [SerializeField]
     TileBase _testTile;
+
+    [SerializeField]
+    TileBase _ruleTile;
+
+    [SerializeField]
+    TileBase _heartTile;
 
     [SerializeField]
     TileBase[] _randomPool;
@@ -40,6 +53,12 @@ public class BuildManager : MonoBehaviourSingleton<BuildManager>
     [SerializeField]
     TileBase[] _dirtTilePool;
 
+    [SerializeField]
+    TileBase _lightedTile;
+
+    [SerializeField]
+    TileBase _darkedTile;
+
     List<Vector3> _buildPath;
 
     [SerializeField]
@@ -49,48 +68,75 @@ public class BuildManager : MonoBehaviourSingleton<BuildManager>
     AudioClip _removeAudio;
 
     [SerializeField]
-    GameObject _viewPoint;
+    GameObject _viewPointX;
+    [SerializeField]
+    GameObject _viewPointY;
 
     AudioSource _buildAudio;
 
     private void Awake()
     {
         GameManager.Instance.OnInitialzed += ClearBuildPath;
+        GameManager.Instance.OnInitialzed += ClearRootTile;
+        GameManager.Instance.OnInitialzed += ResetViewpoint;
         _buildAudio = this.GetComponent<AudioSource>();
     }
 
     private void OnDisable()
     {
         GameManager.Instance.OnInitialzed -= ClearBuildPath;
+        GameManager.Instance.OnInitialzed -= ClearRootTile;
+        GameManager.Instance.OnInitialzed -= ResetViewpoint;
     }
 
     void Update()
     {
         if (Input.GetMouseButtonDown(0))
-            PlaceTile();
+        {
+            Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            var tile = _tilemap.GetTile(_tilemap.WorldToCell(pos));
+            if (tile)
+            {
+                PlaceTile(pos);
+            }
+        }
+            
         if (Input.GetMouseButtonDown(1))
             RemoveRoot();
     }
 
-    void PlaceTile()
+    void PlaceTile(Vector3 pos)
     {
-        Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         var rbTile = GetRBTileOnClick(pos);
 
-        
+
         if (CanPlaceRoot(rbTile) && HasRootLeft())
         {
             _tilemap.SetTile(_tilemap.WorldToCell(pos), _testTile);
+            _rootTileMap.SetTile(_rootTileMap.WorldToCell(pos), _ruleTile);
             GameManager.Instance.Remove1Root();
             if (GetPoint(rbTile) > 0)
-                GameManager.Instance.AddScore(GetPoint(rbTile));
+            {
+                var rbt = GetPoint(rbTile);
+                GameManager.Instance.AddScore(rbt);
+
+            }
+
             _buildPath.Add(pos);
 
             _buildAudio.PlayOneShot(_placeAudio);
 
-            _viewPoint.transform.position = pos;
+            if (pos.y < _viewPointY.transform.position.y)
+                _viewPointY.transform.position = pos;
+
+            if (Mathf.Abs(pos.x) > Mathf.Abs(_viewPointX.transform.position.x))
+                _viewPointX.transform.position = pos;
+                
+
+            LightPoint(rbTile.PointFlag,pos);
         }
     }
+
     void RemoveRoot()
     {
         //Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -113,9 +159,10 @@ public class BuildManager : MonoBehaviourSingleton<BuildManager>
             GameManager.Instance.AddScore(-GetPoint(rbTile));
 
         _tilemap.SetTile(_tilemap.WorldToCell(pos), GetRandomDirtTile());
+        _rootTileMap.SetTile(_tilemap.WorldToCell(pos), null);
         GameManager.Instance.Add1Root();
 
-        _viewPoint.transform.position = pos;
+        DarkPoint(rbTile.PointFlag, pos);
 
         _buildPath.RemoveAt(_buildPath.Count - 1);
 
@@ -123,6 +170,30 @@ public class BuildManager : MonoBehaviourSingleton<BuildManager>
 
     }
 
+
+    void LightPoint(int[] dir, Vector3 pos)
+    {
+        if(dir[0] == 1)
+            _tilemap.SetTile(_tilemap.WorldToCell(pos+Vector3Int.left), _lightedTile);
+        if (dir[1] == 1)
+            _tilemap.SetTile(_tilemap.WorldToCell(pos + Vector3Int.up), _lightedTile);
+        if (dir[2] == 1)
+            _tilemap.SetTile(_tilemap.WorldToCell(pos + Vector3Int.right), _lightedTile);
+        if (dir[3] == 1)
+            _tilemap.SetTile(_tilemap.WorldToCell(pos + Vector3Int.down), _lightedTile);
+    }
+
+    void DarkPoint(int[] dir, Vector3 pos)
+    {
+        if (dir[0] == 1)
+            _tilemap.SetTile(_tilemap.WorldToCell(pos + Vector3Int.left), _darkedTile);
+        if (dir[1] == 1)
+            _tilemap.SetTile(_tilemap.WorldToCell(pos + Vector3Int.up), _darkedTile);
+        if (dir[2] == 1)
+            _tilemap.SetTile(_tilemap.WorldToCell(pos + Vector3Int.right), _darkedTile);
+        if (dir[3] == 1)
+            _tilemap.SetTile(_tilemap.WorldToCell(pos + Vector3Int.down), _darkedTile);
+    }
 
     bool HasRootLeft()
     {
@@ -200,27 +271,60 @@ public class BuildManager : MonoBehaviourSingleton<BuildManager>
 
         var tile = _tilemap.GetTile(tpos);
         List<TileData> neibours = new List<TileData>();
+        int[] pointFlag = { 0, 0, 0, 0 };
         var tmpTile = _tilemap.GetTile(tpos + Vector3Int.left);
         if (tmpTile != null)
-            neibours.Add(GetTileData(tmpTile));
+        {
+            var tmprbt = GetTileData(tmpTile);
+            neibours.Add(tmprbt);
+            if (tmprbt.TileType == TileTypes.Point)
+            {
+                pointFlag[0] = 1;
+            }
+        }
         else   
             neibours.Add(_outOfBoundTileData);
+
         tmpTile = _tilemap.GetTile(tpos + Vector3Int.up);
         if (tmpTile != null)
-            neibours.Add(GetTileData(tmpTile));
+        {
+            var tmprbt = GetTileData(tmpTile);
+            neibours.Add(tmprbt);
+            if (tmprbt.TileType == TileTypes.Point)
+            {
+                pointFlag[1] = 1;
+            }
+        }
         else
             neibours.Add(_outOfBoundTileData);
+
         tmpTile = _tilemap.GetTile(tpos + Vector3Int.right);
         if (tmpTile != null)
-            neibours.Add(GetTileData(tmpTile));
+        {
+            var tmprbt = GetTileData(tmpTile);
+            neibours.Add(tmprbt);
+            if (tmprbt.TileType == TileTypes.Point)
+            {
+                pointFlag[2] = 1;
+            }
+        }
         else
             neibours.Add(_outOfBoundTileData);
+
         tmpTile = _tilemap.GetTile(tpos + Vector3Int.down);
         if (tmpTile != null)
-            neibours.Add(GetTileData(tmpTile));
+        {
+            var tmprbt = GetTileData(tmpTile);
+            neibours.Add(tmprbt);
+            if (tmprbt.TileType == TileTypes.Point)
+            {
+                pointFlag[3] = 1;
+            }
+        }
         else
             neibours.Add(_outOfBoundTileData);
-        var rbTile = new RootBuilderTile(tile, neibours);
+
+        var rbTile = new RootBuilderTile(tile, neibours,pointFlag);
         return rbTile;
     }
 
@@ -238,11 +342,15 @@ public class BuildManager : MonoBehaviourSingleton<BuildManager>
 
         var start = new Vector3(0, 0, 0);
         _tilemap.SetTile(_tilemap.WorldToCell(start), _testTile);
+        _tilemap.SetTile(_tilemap.WorldToCell(start+Vector3Int.left), GetRandomDirtTile());
+        _tilemap.SetTile(_tilemap.WorldToCell(start + Vector3Int.right), GetRandomDirtTile());
+        _tilemap.SetTile(_tilemap.WorldToCell(start + Vector3Int.down), GetRandomDirtTile());
+        _rootTileMap.SetTile(_tilemap.WorldToCell(start), _ruleTile);
     }
 
     TileBase GetRandomTile()
     {
-        int rng = Random.Range(0, 10);
+        int rng = Random.Range(0,_randomPool.Length);
 
         return _randomPool[rng];
     }
@@ -250,6 +358,17 @@ public class BuildManager : MonoBehaviourSingleton<BuildManager>
     void ClearBuildPath()
     {
         _buildPath = new List<Vector3>();
+    }
+
+    void ClearRootTile()
+    {
+        _rootTileMap.ClearAllTiles();
+    }
+
+    void ResetViewpoint()
+    {
+        _viewPointX.transform.position = new Vector3(0, 0, 0);
+        _viewPointY.transform.position = new Vector3(0, 0, 0);
     }
 
 }
